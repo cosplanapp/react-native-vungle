@@ -244,7 +244,23 @@ public final class ReactNativeVungleModule: Module {
       }
     }
 
-    AsyncFunction("loadRewardedAsync") { (placementId: String, userId: String?) async throws -> Bool in
+    AsyncFunction("getBiddingTokenAsync") { () async throws -> String in
+      throw Exception(
+        name: "VungleBiddingAndroidOnly",
+        description: "getBiddingTokenAsync is implemented on Android only.",
+        code: "ERR_VUNGLE_BIDDING_ANDROID_ONLY"
+      )
+    }
+
+    AsyncFunction("loadRewardedAsync") { (placementId: String, userId: String?, adMarkup: String?) async throws -> Bool in
+      if let adMarkup = adMarkup, !adMarkup.isEmpty {
+        throw Exception(
+          name: "VungleBiddingAndroidOnly",
+          description: "Rewarded load with adMarkup (header bidding) is implemented on Android only.",
+          code: "ERR_VUNGLE_BIDDING_ANDROID_ONLY"
+        )
+      }
+
       self.stateLock.lock()
       let initialized = self.initSucceeded
       self.stateLock.unlock()

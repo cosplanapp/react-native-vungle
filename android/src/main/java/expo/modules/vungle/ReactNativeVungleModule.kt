@@ -3,6 +3,7 @@ package expo.modules.vungle
 import android.util.Log
 import com.vungle.ads.AdConfig
 import com.vungle.ads.BaseAd
+import com.vungle.ads.BidTokenCallback
 import com.vungle.ads.InitializationListener
 import com.vungle.ads.RewardedAd
 import com.vungle.ads.RewardedAdListener
@@ -210,7 +211,7 @@ class ReactNativeVungleModule : Module() {
       true
     }
 
-    AsyncFunction("loadRewardedAsync") Coroutine { placementId: String, userId: String? ->
+    AsyncFunction("loadRewardedAsync") Coroutine { placementId: String, userId: String?, adMarkup: String? ->
       val host = this@ReactNativeVungleModule
       val context = appContext.reactContext ?: throw Exceptions.ReactContextLost()
       if (!host.initSucceeded) {
@@ -219,7 +220,11 @@ class ReactNativeVungleModule : Module() {
 
       host.rewardedAds.remove(placementId)?.adListener = null
 
-      host.logNative("loadRewarded_start", placementId)
+      val bidding = !adMarkup.isNullOrBlank()
+      host.logNative(
+        "loadRewarded_start",
+        if (bidding) "$placementId bidding=1" else placementId
+      )
       host.emit("rewardedLoadStarted", placementId)
 
       suspendCoroutine { cont ->
@@ -234,11 +239,43 @@ class ReactNativeVungleModule : Module() {
             setUserId(userId)
           }
           adListener = host.rewardedListener(placementId)
-          load()
+          // Waterfall: pass null. In-app / header bidding: pass the bid response string from your auction (see Help Center + placement “In-App Bidding”).
+          if (bidding) {
+            load(requireNotNull(adMarkup))
+          } else {
+            load(null)
+          }
         }
         host.rewardedAds[placementId] = ad
       }
       true
+    }
+
+    AsyncFunction("getBiddingTokenAsync") Coroutine {
+      val host = this@ReactNativeVungleModule
+      val context = appContext.reactContext ?: throw Exceptions.ReactContextLost()
+      if (!host.initSucceeded) {
+        throw CodedException("ERR_VUNGLE_NOT_INITIALIZED", "Call initSdkAsync first", null)
+      }
+      host.logNative("getBiddingToken_start")
+      suspendCoroutine { cont ->
+        VungleAds.getBiddingToken(
+          context,
+          object : BidTokenCallback {
+            override fun onBidTokenCollected(bidToken: String?) {
+              host.logNative("getBiddingToken_success", "len=${bidToken?.length ?: 0}")
+              cont.resume(bidToken.orEmpty())
+            }
+
+            override fun onBidTokenError(message: String) {
+              host.logNative("getBiddingToken_error", message)
+              cont.resumeWithException(
+                CodedException("ERR_VUNGLE_BID_TOKEN", message.ifBlank { "bid_token_error" }, null)
+              )
+            }
+          }
+        )
+      }
     }
 
     AsyncFunction("showRewardedAsync") Coroutine { placementId: String ->
