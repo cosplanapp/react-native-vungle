@@ -37,8 +37,8 @@ export type VungleInitOptions = {
 
 export type VungleRewardedLoadOptions = {
   /**
-   * Passed to the Android SDK (`RewardedAd.setUserId`).
-   * iOS: reserved for a future native mapping when the public API is confirmed for your SDK pin.
+   * Android: `RewardedAd.setUserId` before load.
+   * iOS (VungleAds 7.x): `VungleRewarded.setUserIdWithUserId` before load (S2S / rewarded user id).
    */
   userId?: string | null;
 };

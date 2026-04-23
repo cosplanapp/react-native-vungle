@@ -286,7 +286,8 @@ public final class ReactNativeVungleModule: Module {
         let bridge = RewardedBridge(owner: self, placementId: placementId)
         rewarded.delegate = bridge
         if let userId = userId, !userId.isEmpty {
-          self.logNative("loadRewarded_userId", detail: "provided (iOS native setUserId not wired in v0.1)")
+          rewarded.setUserIdWithUserId(userId)
+          self.logNative("loadRewarded_userId", detail: "setUserIdWithUserId len=\(userId.count)")
         }
 
         self.stateLock.lock()
