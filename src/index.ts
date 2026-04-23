@@ -36,23 +36,6 @@ export function getSdkVersion(): string {
 }
 
 /**
- * Liftoff bidding token for programmatic / header bidding (Android).
- * Send the token to your exchange or server auction; use the returned bid response as `adMarkup` in {@link VungleRewardedAd.load}.
- * On iOS this rejects with `ERR_VUNGLE_BIDDING_ANDROID_ONLY`.
- */
-export async function getVungleBiddingToken(): Promise<string> {
-  vungleLog.info("getVungleBiddingToken_start");
-  try {
-    const token = await native().getBiddingTokenAsync();
-    vungleLog.info("getVungleBiddingToken_complete", `len=${token.length}`);
-    return token;
-  } catch (e) {
-    vungleLog.error("getVungleBiddingToken_failed", e instanceof Error ? e.message : String(e));
-    throw e;
-  }
-}
-
-/**
  * Subscribe to all native lifecycle / diagnostic events (single channel `onVungle`).
  */
 export function addVungleEventListener(
@@ -75,13 +58,11 @@ export class VungleRewardedAd {
 
   async load(options?: VungleRewardedLoadOptions): Promise<void> {
     const userId = options?.userId ?? null;
-    const adMarkup = options?.adMarkup ?? null;
-    const bidding = typeof adMarkup === "string" && adMarkup.length > 0;
     vungleLog.info(
       "VungleRewardedAd_load_start",
-      `${this.placementId} userIdSet=${String(!!userId && userId.length > 0)} bidding=${String(bidding)}`
+      `${this.placementId} userIdSet=${String(!!userId && userId.length > 0)}`
     );
-    await native().loadRewardedAsync(this.placementId, userId, adMarkup);
+    await native().loadRewardedAsync(this.placementId, userId);
     vungleLog.info("VungleRewardedAd_load_complete", this.placementId);
   }
 

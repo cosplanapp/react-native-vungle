@@ -30,8 +30,6 @@
     "@expo/config-plugins": "~54.0.2"
   },
   "devDependencies": {
-    "expo": "~54.0.29",
-    "expo-modules-core": "~3.0.22",
     "typescript": "~5.9.2"
   },
   "files": [
